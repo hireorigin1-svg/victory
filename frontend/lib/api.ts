@@ -73,6 +73,18 @@ export type DirectorWorkflow = {
   workflow_events: unknown[];
 };
 
+export type LLMInteraction = {
+  id: string;
+  workflow_id?: string | null;
+  shot_id?: string | null;
+  provider: string;
+  model?: string | null;
+  purpose: string;
+  status: string;
+  error_message?: string | null;
+  response_text: string;
+};
+
 export type DirectorWorkflowEvaluation = {
   face: number;
   costume: number;
@@ -341,6 +353,10 @@ export function startDirectorWorkflow(token: string, payload: Record<string, unk
     method: "POST",
     body: JSON.stringify(payload)
   });
+}
+
+export function listWorkflowLLMInteractions(token: string, workflowId: string) {
+  return request<LLMInteraction[]>(`/api/v1/director-workflows/${workflowId}/llm-interactions`, token);
 }
 
 export function uploadDirectorWorkflowResult(

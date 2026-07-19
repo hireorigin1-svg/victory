@@ -15,6 +15,7 @@ from app.models.evaluation import (
 )
 from app.models.film_bible import FilmBible
 from app.models.generation_experiment import GenerationExperiment
+from app.models.llm_interaction import LLMInteraction
 from app.models.memory_graph import MemoryGraphEdge, MemoryGraphNode
 from app.models.movie_state import MovieState
 from app.models.prompt_evolution import PromptEvolution
@@ -60,6 +61,7 @@ __all__ = [
     "GenerationDatasetRecord",
     "FilmBible",
     "GenerationExperiment",
+    "LLMInteraction",
     "MemoryGraphEdge",
     "MemoryGraphNode",
     "MovieState",

@@ -23,6 +23,7 @@ import {
   DirectorRunResponse,
   FeedbackLoopResponse,
   EnvironmentRecord,
+  LLMInteraction,
   SceneRecord,
   ShotRecord,
   approveShot,
@@ -40,6 +41,7 @@ import {
   listProps,
   listScenes,
   listShots,
+  listWorkflowLLMInteractions,
   login,
   reviewDirectorWorkflow,
   getBrainSummary,
@@ -115,6 +117,7 @@ export default function Home() {
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [workflowReviewReasons, setWorkflowReviewReasons] = useState("");
   const [directorWorkflow, setDirectorWorkflow] = useState<DirectorWorkflow | null>(null);
+  const [workflowInteractions, setWorkflowInteractions] = useState<LLMInteraction[]>([]);
   const [workflowEvaluation, setWorkflowEvaluation] = useState<DirectorWorkflowEvaluation | null>(null);
   const [bibleForm, setBibleForm] = useState(emptyBible);
   const [directorResult, setDirectorResult] = useState<DirectorRunResponse | null>(null);
@@ -353,6 +356,7 @@ export default function Home() {
                     environment_id: selectedEnvironmentId || null
                   });
                   setDirectorWorkflow(workflow);
+                  setWorkflowInteractions(await listWorkflowLLMInteractions(token, workflow.id));
                   setWorkflowEvaluation(null);
                   setMessage("GPT and Claude generated Higgsfield prompts from the stored DB context.");
                   await refresh();
@@ -447,6 +451,7 @@ export default function Home() {
                     onClick={async () => {
                       const workflow = await uploadDirectorWorkflowResult(token, directorWorkflow.id, workflowUpload);
                       setDirectorWorkflow(workflow);
+                      setWorkflowInteractions(await listWorkflowLLMInteractions(token, workflow.id));
                       setMessage("Higgsfield result uploaded and stored against this workflow.");
                       await refresh();
                     }}
@@ -497,6 +502,7 @@ export default function Home() {
                           reasons: splitLines(workflowReviewReasons)
                         });
                         setDirectorWorkflow(workflow);
+                        setWorkflowInteractions(await listWorkflowLLMInteractions(token, workflow.id));
                         setMessage("Approved shot saved with image/video/prompt and visual memory.");
                         await refresh();
                       }}
@@ -515,6 +521,7 @@ export default function Home() {
                           reasons: splitLines(workflowReviewReasons)
                         });
                         setDirectorWorkflow(workflow);
+                        setWorkflowInteractions(await listWorkflowLLMInteractions(token, workflow.id));
                         setMessage("Rejected shot stored. GPT and Claude generated improved prompts.");
                         await refresh();
                       }}
@@ -527,6 +534,13 @@ export default function Home() {
                   <div className="grid gap-3 lg:grid-cols-2">
                     <PromptBox title="Improved GPT Prompt" value={directorWorkflow.improved_gpt_prompt ?? ""} copy />
                     <PromptBox title="Improved Claude Prompt" value={directorWorkflow.improved_claude_prompt ?? ""} />
+                  </div>
+                ) : null}
+                {workflowInteractions.length ? (
+                  <div className="grid gap-3 md:grid-cols-4">
+                    {workflowInteractions.map((item) => (
+                      <Metric key={item.id} label={`${item.provider} ${item.purpose}`} value={item.status} />
+                    ))}
                   </div>
                 ) : null}
               </div>

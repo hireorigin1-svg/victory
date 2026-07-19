@@ -285,6 +285,18 @@ def test_director_workflow_stores_gpt_claude_higgsfield_and_review_loop(client: 
     assert workflow["claude_prompt"]
     assert workflow["higgsfield_prompt"] == workflow["gpt_prompt"]
     assert workflow["llm_context"]["scene_id"] == scene["id"]
+    assert workflow["llm_context"]["project_memory"]
+    assert workflow["llm_context"]["continuity_memory"]
+    assert workflow["llm_context"]["learning_memory"]
+
+    interactions = client.get(
+        f"/api/v1/director-workflows/{workflow['id']}/llm-interactions",
+        headers=headers,
+    )
+    assert interactions.status_code == 200
+    interaction_body = interactions.json()
+    assert {item["provider"] for item in interaction_body} == {"openai", "anthropic"}
+    assert all(item["request_context"]["scene_id"] == scene["id"] for item in interaction_body)
 
     uploaded = client.post(
         f"/api/v1/director-workflows/{workflow['id']}/upload-result",
@@ -305,6 +317,13 @@ def test_director_workflow_stores_gpt_claude_higgsfield_and_review_loop(client: 
     assert rejected_body["review_reasons"] == ["Face drifted", "Costume changed"]
     assert rejected_body["improved_gpt_prompt"]
     assert rejected_body["improved_claude_prompt"]
+
+    repaired_interactions = client.get(
+        f"/api/v1/director-workflows/{workflow['id']}/llm-interactions",
+        headers=headers,
+    ).json()
+    assert len(repaired_interactions) == 4
+    assert {item["purpose"] for item in repaired_interactions} == {"initial_prompt", "rejection_repair"}
 
     shot = client.get(f"/api/v1/shots/{workflow['shot_id']}", headers=headers)
     assert shot.status_code == 200

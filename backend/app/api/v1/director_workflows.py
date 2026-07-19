@@ -5,6 +5,7 @@ from app.api.deps import get_current_user, require_roles
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.repositories.director_workflows import DirectorWorkflowRepository
+from app.repositories.llm_interactions import LLMInteractionRepository
 from app.schemas.director_workflow import (
     DirectorWorkflowEvaluation,
     DirectorWorkflowRead,
@@ -12,6 +13,7 @@ from app.schemas.director_workflow import (
     DirectorWorkflowStart,
     DirectorWorkflowUpload,
 )
+from app.schemas.llm_interaction import LLMInteractionRead
 from app.services.director_workflow import DirectorWorkflowService
 
 router = APIRouter(prefix="/director-workflows", tags=["director-workflows"])
@@ -36,6 +38,18 @@ def get_director_workflow(
     if not workflow:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return workflow
+
+
+@router.get("/{workflow_id}/llm-interactions", response_model=list[LLMInteractionRead])
+def list_workflow_llm_interactions(
+    workflow_id: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(UserRole.admin, UserRole.director, UserRole.editor)),
+):
+    workflow = DirectorWorkflowRepository(db).get(workflow_id)
+    if not workflow:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Director workflow not found")
+    return LLMInteractionRepository(db).list_for_workflow(workflow_id)
 
 
 @router.post("/start", response_model=DirectorWorkflowRead, status_code=status.HTTP_201_CREATED)
