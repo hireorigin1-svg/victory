@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cinemind
+      POSTGRES_PASSWORD: cinemind
+      POSTGRES_DB: cinemind
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://cinemind:cinemind@postgres:5432/cinemind
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: local-dev-secret
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ./backend
+    command: celery -A app.tasks.celery_app worker --loglevel=INFO
+    environment:
+      DATABASE_URL: postgresql+psycopg://cinemind:cinemind@postgres:5432/cinemind
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: local-dev-secret
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
