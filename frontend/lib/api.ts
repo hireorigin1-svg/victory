@@ -84,6 +84,13 @@ export type DirectorWorkflowEvaluation = {
   notes: string[];
 };
 
+export type MediaUpload = {
+  url: string;
+  filename: string;
+  content_type: string;
+  size: number;
+};
+
 export type FilmBible = {
   id: string;
   project_name: string;
@@ -306,6 +313,23 @@ export function createShot(token: string, payload: Record<string, unknown>) {
     method: "POST",
     body: JSON.stringify(payload)
   });
+}
+
+export async function uploadMedia(token: string, file: File) {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetch(`${API_BASE}/api/v1/media/uploads`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.detail ?? `Upload failed with ${response.status}`);
+  }
+  return response.json() as Promise<MediaUpload>;
 }
 
 export function listDirectorWorkflows(token: string) {

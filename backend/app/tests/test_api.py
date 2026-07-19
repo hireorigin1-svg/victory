@@ -324,6 +324,29 @@ def test_director_workflow_stores_gpt_claude_higgsfield_and_review_loop(client: 
     assert approved_shot.json()["approved_image"] == "mock://higgsfield/shot-1-fixed.png"
 
 
+def test_media_upload_accepts_images_and_rejects_other_files(client: TestClient) -> None:
+    token = _register_and_login(client, role="director")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    uploaded = client.post(
+        "/api/v1/media/uploads",
+        headers=headers,
+        files={"file": ("frame.png", b"fake-image-bytes", "image/png")},
+    )
+    assert uploaded.status_code == 201
+    body = uploaded.json()
+    assert body["url"].endswith(".png")
+    assert body["content_type"] == "image/png"
+    assert body["size"] == len(b"fake-image-bytes")
+
+    rejected = client.post(
+        "/api/v1/media/uploads",
+        headers=headers,
+        files={"file": ("notes.txt", b"not media", "text/plain")},
+    )
+    assert rejected.status_code == 400
+
+
 def test_brain_feedback_loop_logs_experiment_critic_evolution_and_dna(client: TestClient) -> None:
     token = _register_and_login(client, role="director")
     headers = {"Authorization": f"Bearer {token}"}

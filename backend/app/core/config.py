@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5-mini"
     anthropic_api_key: str | None = None
     anthropic_model: str = "claude-sonnet-4-5"
+    upload_dir: str = "uploads"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

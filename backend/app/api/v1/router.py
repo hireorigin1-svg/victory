@@ -10,6 +10,7 @@ from app.api.v1 import (
     environments,
     evaluation,
     film_bible,
+    media,
     memory,
     props,
     research,
@@ -28,6 +29,7 @@ api_router.include_router(director_workflows.router)
 api_router.include_router(environments.router)
 api_router.include_router(evaluation.router)
 api_router.include_router(film_bible.router)
+api_router.include_router(media.router)
 api_router.include_router(memory.router)
 api_router.include_router(props.router)
 api_router.include_router(research.router)

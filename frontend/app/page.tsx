@@ -66,6 +66,7 @@ import {
   runFeedbackLoop,
   saveFilmBible,
   startDirectorWorkflow,
+  uploadMedia,
   uploadDirectorWorkflowResult
 } from "@/lib/api";
 import { Field } from "@/components/Field";
@@ -111,6 +112,7 @@ export default function Home() {
   const [directorForm, setDirectorForm] = useState(emptyDirector);
   const [simpleDirectorForm, setSimpleDirectorForm] = useState(emptySimpleDirector);
   const [workflowUpload, setWorkflowUpload] = useState(emptyWorkflowUpload);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const [workflowReviewReasons, setWorkflowReviewReasons] = useState("");
   const [directorWorkflow, setDirectorWorkflow] = useState<DirectorWorkflow | null>(null);
   const [workflowEvaluation, setWorkflowEvaluation] = useState<DirectorWorkflowEvaluation | null>(null);
@@ -391,6 +393,42 @@ export default function Home() {
                   <PromptBox title="Higgsfield Prompt" value={directorWorkflow.higgsfield_prompt ?? ""} copy />
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
+                  <MediaFileField
+                    label="Upload Image"
+                    accept="image/*"
+                    disabled={uploadingMedia}
+                    onChange={async (file) => {
+                      if (!file) return;
+                      setUploadingMedia(true);
+                      try {
+                        const upload = await uploadMedia(token, file);
+                        setWorkflowUpload((current) => ({ ...current, image_url: upload.url }));
+                        setMessage("Image uploaded and URL added to the workflow.");
+                      } catch (error) {
+                        setMessage(error instanceof Error ? error.message : "Image upload failed");
+                      } finally {
+                        setUploadingMedia(false);
+                      }
+                    }}
+                  />
+                  <MediaFileField
+                    label="Upload Video"
+                    accept="video/*"
+                    disabled={uploadingMedia}
+                    onChange={async (file) => {
+                      if (!file) return;
+                      setUploadingMedia(true);
+                      try {
+                        const upload = await uploadMedia(token, file);
+                        setWorkflowUpload((current) => ({ ...current, video_url: upload.url }));
+                        setMessage("Video uploaded and URL added to the workflow.");
+                      } catch (error) {
+                        setMessage(error instanceof Error ? error.message : "Video upload failed");
+                      } finally {
+                        setUploadingMedia(false);
+                      }
+                    }}
+                  />
                   <Field
                     label="Image URL"
                     name="image_url"
@@ -1041,6 +1079,31 @@ function PromptBox({ title, value, copy = false }: { title: string; value: strin
       </div>
       <pre className="max-h-56 overflow-auto whitespace-pre-wrap p-3 text-xs leading-5">{value || "Not generated yet."}</pre>
     </div>
+  );
+}
+
+function MediaFileField({
+  label,
+  accept,
+  disabled,
+  onChange
+}: {
+  label: string;
+  accept: string;
+  disabled: boolean;
+  onChange: (file: File | null) => void;
+}) {
+  return (
+    <label className="grid gap-1 text-sm font-medium text-ink">
+      <span>{label}</span>
+      <input
+        accept={accept}
+        className="w-full rounded border border-line bg-white px-3 py-2 text-sm outline-none transition file:mr-3 file:rounded file:border-0 file:bg-ink file:px-3 file:py-1 file:text-sm file:font-semibold file:text-white focus:border-signal focus:ring-2 focus:ring-signal/20"
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+        type="file"
+      />
+    </label>
   );
 }
 

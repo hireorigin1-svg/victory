@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
@@ -13,6 +16,7 @@ from app.services.auth import AuthService
 
 def create_app(seed_data: bool = True) -> FastAPI:
     settings = get_settings()
+    Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     app = FastAPI(title=settings.app_name)
 
     app.add_middleware(
@@ -34,6 +38,7 @@ def create_app(seed_data: bool = True) -> FastAPI:
         return {"status": "ok", "service": settings.app_name}
 
     app.include_router(api_router)
+    app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
     return app
 
 
