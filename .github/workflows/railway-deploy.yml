@@ -10,7 +10,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       RAILWAY_PROJECT_ID: 080ddbc3-57d5-4164-9bb3-e07c409d6782
     steps:
       - name: Checkout
@@ -23,6 +22,34 @@ jobs:
 
       - name: Verify Railway CLI
         run: railway --version
+
+      - name: Configure Railway CLI auth
+        env:
+          RAILWAY_USER_ID: ${{ secrets.RAILWAY_USER_ID }}
+          RAILWAY_ACCESS_TOKEN: ${{ secrets.RAILWAY_ACCESS_TOKEN }}
+          RAILWAY_REFRESH_TOKEN: ${{ secrets.RAILWAY_REFRESH_TOKEN }}
+          RAILWAY_TOKEN_EXPIRES_AT: ${{ secrets.RAILWAY_TOKEN_EXPIRES_AT }}
+        run: |
+          mkdir -p "$HOME/.railway"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config = {
+              "projects": {},
+              "user": {
+                  "id": os.environ["RAILWAY_USER_ID"],
+                  "token": None,
+                  "accessToken": os.environ["RAILWAY_ACCESS_TOKEN"],
+                  "refreshToken": os.environ["RAILWAY_REFRESH_TOKEN"],
+                  "tokenExpiresAt": int(os.environ["RAILWAY_TOKEN_EXPIRES_AT"]),
+              },
+              "editor": None,
+              "linkedFunctions": None,
+          }
+          Path.home().joinpath(".railway", "config.json").write_text(json.dumps(config))
+          PY
 
       - name: Deploy backend
         run: railway up backend --path-as-root --service victory-backend --project "$RAILWAY_PROJECT_ID" --detach --message "GitHub auto-deploy backend"
