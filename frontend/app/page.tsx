@@ -93,9 +93,9 @@ const emptyReference = { image_url: "mock://approved/reference-1", quality_score
 
 export default function Home() {
   const [token, setToken] = useState("");
-  const [email, setEmail] = useState("director@example.com");
-  const [password, setPassword] = useState("correct-horse-battery");
-  const [message, setMessage] = useState("Sign in with the seeded director account.");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("Sign in with your Victory director account.");
   const [characters, setCharacters] = useState<Character[]>([]);
   const [environments, setEnvironments] = useState<EnvironmentRecord[]>([]);
   const [cameras, setCameras] = useState<CameraProfile[]>([]);

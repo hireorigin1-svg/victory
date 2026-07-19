@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CineMind AI Director",
+  title: "Victory",
   description: "Continuity-first AI filmmaking director console"
 };
 
