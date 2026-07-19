@@ -52,7 +52,9 @@ jobs:
           PY
 
       - name: Deploy backend
-        run: railway up backend --path-as-root --service victory-backend --project "$RAILWAY_PROJECT_ID" --environment production --detach --message "GitHub auto-deploy backend"
+        working-directory: backend
+        run: railway up --service victory-backend --project "$RAILWAY_PROJECT_ID" --environment production --detach --message "GitHub auto-deploy backend"
 
       - name: Deploy frontend
-        run: railway up frontend --path-as-root --service victory-frontend --project "$RAILWAY_PROJECT_ID" --environment production --detach --message "GitHub auto-deploy frontend"
+        working-directory: frontend
+        run: railway up --service victory-frontend --project "$RAILWAY_PROJECT_ID" --environment production --detach --message "GitHub auto-deploy frontend"
