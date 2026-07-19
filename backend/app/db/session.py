@@ -11,10 +11,19 @@ class Base(DeclarativeBase):
 
 
 settings = get_settings()
+
+
+def _database_url() -> str:
+    if settings.database_url.startswith("postgresql://"):
+        return settings.database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return settings.database_url
+
+
+database_url = _database_url()
 engine = create_engine(
-    settings.database_url,
+    database_url,
     connect_args={"check_same_thread": False}
-    if settings.database_url.startswith("sqlite")
+    if database_url.startswith("sqlite")
     else {},
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
