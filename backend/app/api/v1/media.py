@@ -38,7 +38,13 @@ def upload_media(
         shutil.copyfileobj(file.file, output)
 
     size = destination.stat().st_size
-    base_url = str(request.base_url).rstrip("/")
+    forwarded_proto = request.headers.get("x-forwarded-proto")
+    forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    base_url = (
+        f"{forwarded_proto}://{forwarded_host}"
+        if forwarded_proto and forwarded_host
+        else str(request.base_url).rstrip("/")
+    )
     return MediaUploadRead(
         url=f"{base_url}/uploads/{filename}",
         filename=filename,
