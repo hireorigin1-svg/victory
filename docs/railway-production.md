@@ -81,6 +81,28 @@ NEXT_PUBLIC_API_BASE_URL=https://<victory-backend-url>
 9. Deploy frontend.
 10. Open frontend and log in using `SEED_DIRECTOR_EMAIL` and `SEED_DIRECTOR_PASSWORD`.
 
+## GitHub Auto-Deploy
+
+The repository includes `.github/workflows/railway-deploy.yml`.
+
+To enable it:
+
+1. Open Railway dashboard.
+2. Create a Railway project token for the `victory` project.
+3. Open GitHub repo settings.
+4. Add repository secret:
+
+```env
+RAILWAY_TOKEN=<railway-project-token>
+```
+
+After that, every push to `main` deploys both:
+
+- `victory-backend`
+- `victory-frontend`
+
+Railway's direct GitHub repo-source connection for existing services must be configured in the Railway dashboard under each service's Source settings.
+
 ## What You Still Need To Provide
 
 - Railway account access or a Railway project invite.
