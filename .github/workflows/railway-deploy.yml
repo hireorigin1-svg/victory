@@ -17,7 +17,12 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Railway CLI
-        run: bash <(curl -fsSL https://railway.com/install.sh)
+        run: |
+          bash <(curl -fsSL https://railway.com/install.sh)
+          echo "$HOME/.railway/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Railway CLI
+        run: railway --version
 
       - name: Deploy backend
         run: railway up backend --path-as-root --service victory-backend --project "$RAILWAY_PROJECT_ID" --detach --message "GitHub auto-deploy backend"
