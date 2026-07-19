@@ -13,6 +13,7 @@ venv/
 
 backend/cinemind.db
 backend/*.db
+backend/uploads/
 work/
 
 node_modules/
