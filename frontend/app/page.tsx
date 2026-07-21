@@ -97,6 +97,269 @@ const emptyBible = {
 };
 const emptyReference = { image_url: "mock://approved/reference-1", quality_score: "100" };
 
+const fieldPresets: Record<string, string[]> = {
+  face: [
+    "oval heroic face",
+    "round youthful face",
+    "sharp angular face",
+    "broad strong jaw",
+    "soft expressive face",
+    "aged wise face",
+    "divine calm face",
+    "battle-worn face",
+    "canonical approved face"
+  ],
+  hair: [
+    "long flowing black hair",
+    "tied topknot",
+    "shoulder-length wavy hair",
+    "short neat hair",
+    "braided hair",
+    "silver aged hair",
+    "wind-swept hair",
+    "wet rain-soaked hair",
+    "canonical approved hair"
+  ],
+  clothes: [
+    "orange silk dhoti",
+    "temple robes",
+    "royal armor",
+    "battle armor",
+    "forest travel costume",
+    "gold embroidered costume",
+    "simple village costume",
+    "ceremonial costume",
+    "canonical approved costume"
+  ],
+  accessories: [
+    "gold crown",
+    "sacred thread",
+    "arm bands",
+    "necklace",
+    "earrings",
+    "waist belt",
+    "weapon holster",
+    "no accessories",
+    "canonical approved accessories"
+  ],
+  location: [
+    "ancient temple entrance",
+    "palace corridor",
+    "forest path",
+    "mountain cliff",
+    "battlefield",
+    "royal court",
+    "village street",
+    "ocean shore",
+    "Lanka city street",
+    "interior chamber"
+  ],
+  architecture: [
+    "South Indian temple architecture",
+    "golden palace architecture",
+    "stone cave architecture",
+    "wooden village architecture",
+    "ruined ancient architecture",
+    "mythic fortress architecture",
+    "dense forest environment",
+    "open natural landscape",
+    "canonical approved environment"
+  ],
+  lighting: [
+    "soft golden sunrise",
+    "warm sunset backlight",
+    "overcast diffused daylight",
+    "moonlit blue night",
+    "torch-lit interior",
+    "dramatic rim light",
+    "high contrast battle light",
+    "soft devotional glow",
+    "canonical approved lighting"
+  ],
+  weather: [
+    "clear sky",
+    "cloudy",
+    "light rain",
+    "heavy rain",
+    "mist",
+    "storm",
+    "dusty wind",
+    "humid haze",
+    "same as previous shot"
+  ],
+  time: [
+    "dawn",
+    "morning",
+    "midday",
+    "golden hour",
+    "sunset",
+    "blue hour",
+    "night",
+    "same time as previous shot"
+  ],
+  lens: [
+    "24mm wide",
+    "35mm cinematic",
+    "50mm natural",
+    "65mm portrait",
+    "85mm close portrait",
+    "100mm telephoto",
+    "anamorphic 35mm",
+    "same lens as previous shot"
+  ],
+  camera_angle: [
+    "eye-level",
+    "low angle heroic",
+    "high angle vulnerable",
+    "over-the-shoulder",
+    "profile side angle",
+    "three-quarter angle",
+    "top-down",
+    "same camera angle as previous shot"
+  ],
+  movement: [
+    "locked-off static",
+    "slow push in",
+    "slow pull back",
+    "tracking left",
+    "tracking right",
+    "handheld subtle",
+    "crane up",
+    "orbit around subject",
+    "same movement as previous shot"
+  ],
+  aspect_ratio: ["2.39:1", "16:9", "1.85:1", "4:3", "9:16"],
+  film_look: [
+    "epic mythological cinema",
+    "realistic historical drama",
+    "Rajamouli-style scale",
+    "devotional cinematic realism",
+    "dark battle sequence",
+    "soft romantic drama",
+    "high detail premium VFX",
+    "same film look as previous shot"
+  ],
+  category: [
+    "weapon",
+    "vehicle",
+    "jewelry",
+    "costume item",
+    "ritual object",
+    "set dressing",
+    "food",
+    "document",
+    "object"
+  ],
+  position: [
+    "held in right hand",
+    "held in left hand",
+    "on waist",
+    "on shoulder",
+    "on ground foreground",
+    "background left",
+    "background right",
+    "center frame",
+    "same position as previous shot"
+  ],
+  damage_state: [
+    "new",
+    "slightly worn",
+    "dusty",
+    "blood-stained",
+    "burned",
+    "broken",
+    "wet",
+    "same damage state as previous shot"
+  ],
+  emotion: [
+    "calm",
+    "devotional",
+    "determined",
+    "angry",
+    "sad",
+    "fearful",
+    "surprised",
+    "victorious",
+    "exhausted",
+    "same emotion as previous shot"
+  ],
+  pose: [
+    "standing still",
+    "walking forward",
+    "looking left",
+    "looking right",
+    "looking up",
+    "kneeling",
+    "holding weapon ready",
+    "hands folded",
+    "mid-action",
+    "same pose as previous shot"
+  ],
+  timeline: [
+    "before battle",
+    "during battle",
+    "after battle",
+    "morning continuation",
+    "same moment as previous scene",
+    "flashback",
+    "time jump",
+    "night continuation"
+  ],
+  lighting_style: [
+    "consistent cinematic naturalism",
+    "soft devotional glow",
+    "dramatic mythological realism",
+    "warm torch-lit interiors",
+    "high contrast battle lighting",
+    "natural daylight continuity"
+  ],
+  color_palette: [
+    "saffron, deep teal, warm gold",
+    "earth tones, muted green, temple stone",
+    "crimson, gold, charcoal",
+    "moon blue, silver, deep black",
+    "sunset amber, dusty brown, royal red",
+    "forest green, warm skin tones, soft gold"
+  ],
+  camera_rules: [
+    "preserve lens language unless scene changes",
+    "keep eye-line direction continuous",
+    "avoid changing camera height within a dialogue beat",
+    "use heroic low angle only for power moments",
+    "match previous approved camera unless script changes it"
+  ],
+  lens_package: [
+    "35mm anamorphic, 50mm portrait",
+    "24mm wide, 35mm medium, 85mm close-up",
+    "35mm natural, 65mm portrait, 100mm detail",
+    "anamorphic 35mm, anamorphic 50mm, anamorphic 75mm"
+  ],
+  action_rules: [
+    "only change position when script explicitly requires it",
+    "prop hand continuity must be preserved",
+    "emotion changes must follow the script beat",
+    "movement should inherit from previous approved shot",
+    "avoid sudden costume or body changes"
+  ],
+  weather_rules: [
+    "weather remains stable inside a scene",
+    "rain must leave visible wetness in following shots",
+    "dust must remain on costume until cleaned by story",
+    "daylight weather cannot change without timeline reason"
+  ],
+  continuity_rules: [
+    "previous approved visual memory is ground truth",
+    "Film Bible overrides user instruction unless director approves",
+    "character identity must match canonical approved images",
+    "costume and props inherit from the previous approved shot",
+    "warn before changing face, hair, costume, weather, or location"
+  ]
+};
+
+function presetsFor(name: string) {
+  return fieldPresets[name] ?? [];
+}
+
 export default function Home() {
   const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
@@ -337,6 +600,7 @@ export default function Home() {
                   label={labelize(name)}
                   name={name}
                   value={value}
+                  options={presetsFor(name)}
                   textarea={name.includes("rules")}
                   onChange={(field, nextValue) =>
                     setBibleForm((current) => ({ ...current, [field]: nextValue }))
@@ -451,6 +715,7 @@ export default function Home() {
                   key={field}
                   label={labelize(field)}
                   name={field}
+                  options={presetsFor(field)}
                   value={simpleDirectorForm[field as keyof typeof simpleDirectorForm]}
                   onChange={(name, value) => setSimpleDirectorForm((current) => ({ ...current, [name]: value }))}
                 />
@@ -995,7 +1260,7 @@ export default function Home() {
                 <Field label="Script" name="script" value={sceneForm.script} textarea onChange={(f, v) => setSceneForm((c) => ({ ...c, [f]: v }))} />
               </div>
               <div className="md:col-span-2">
-                <Field label="Timeline" name="timeline" value={sceneForm.timeline} onChange={(f, v) => setSceneForm((c) => ({ ...c, [f]: v }))} />
+                <Field label="Timeline" name="timeline" value={sceneForm.timeline} options={presetsFor("timeline")} onChange={(f, v) => setSceneForm((c) => ({ ...c, [f]: v }))} />
               </div>
               <SubmitButton label="Add Scene" />
             </form>
@@ -1028,7 +1293,7 @@ export default function Home() {
                 <Field label="User Instruction" name="user_instruction" value={shotForm.user_instruction} textarea onChange={(f, v) => setShotForm((c) => ({ ...c, [f]: v }))} />
               </div>
               {["lighting", "emotion", "pose"].map((field) => (
-                <Field key={field} label={labelize(field)} name={field} value={shotForm[field as keyof typeof shotForm]} onChange={(f, v) => setShotForm((c) => ({ ...c, [f]: v }))} />
+                <Field key={field} label={labelize(field)} name={field} value={shotForm[field as keyof typeof shotForm]} options={presetsFor(field)} onChange={(f, v) => setShotForm((c) => ({ ...c, [f]: v }))} />
               ))}
               <SubmitButton label="Compile Shot" />
             </form>
@@ -1088,7 +1353,15 @@ function ResourceForm({
     <Panel title={title} icon={icon}>
       <form className="grid gap-3" onSubmit={onSubmit}>
         {Object.entries(form).map(([name, value]) => (
-          <Field key={name} label={labelize(name)} name={name} value={value} textarea={textareas.includes(name)} onChange={onChange} />
+          <Field
+            key={name}
+            label={labelize(name)}
+            name={name}
+            value={value}
+            options={presetsFor(name)}
+            textarea={textareas.includes(name)}
+            onChange={onChange}
+          />
         ))}
         <SubmitButton label={`Add ${title}`} />
       </form>
