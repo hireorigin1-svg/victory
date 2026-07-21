@@ -129,6 +129,28 @@ export type DirectorRunResponse = {
   movie_state: Record<string, unknown>;
 };
 
+export type DirectorOSV2RunResponse = {
+  scene_id: string;
+  shot: ShotRecord;
+  blueprint_id: string;
+  knowledge_packet_id: string;
+  translation_id: string;
+  blueprint: Record<string, unknown>;
+  knowledge_packet: Record<string, unknown>;
+  gpt_prompt: string;
+  claude_review?: Record<string, unknown> | null;
+  translated_prompt: string;
+  confidence_score: number;
+  provider: string;
+  evaluation: {
+    overall_continuity_score: number;
+    decision: string;
+    notes: string[];
+  };
+  decision: string;
+  learning_record: Record<string, unknown>;
+};
+
 export type FeedbackLoopResponse = {
   shot: ShotRecord;
   experiment: {
@@ -400,6 +422,13 @@ export function saveFilmBible(token: string, payload: Record<string, unknown>) {
 
 export function runDirector(token: string, payload: Record<string, unknown>) {
   return request<DirectorRunResponse>("/api/v1/director/run", token, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function runDirectorOSV2(token: string, payload: Record<string, unknown>) {
+  return request<DirectorOSV2RunResponse>("/api/v1/director-os/v2/run", token, {
     method: "POST",
     body: JSON.stringify(payload)
   });

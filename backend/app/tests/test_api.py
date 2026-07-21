@@ -343,6 +343,65 @@ def test_director_workflow_stores_gpt_claude_higgsfield_and_review_loop(client: 
     assert approved_shot.json()["approved_image"] == "mock://higgsfield/shot-1-fixed.png"
 
 
+def test_director_os_v2_builds_blueprint_packet_translation_and_learning_record(client: TestClient) -> None:
+    token = _register_and_login(client, role="director")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    character = client.post(
+        "/api/v1/characters",
+        headers=headers,
+        json={
+            "name": "Hanuman",
+            "face": "consistent heroic simian face",
+            "hair": "dark tied hair",
+            "clothes": "orange silk with gold ornaments",
+            "accessories": "golden gada",
+            "reference_images": ["mock://references/hanuman-face-01"],
+        },
+    ).json()
+    environment = client.post(
+        "/api/v1/environments",
+        headers=headers,
+        json={
+            "location": "Temple Courtyard",
+            "lighting": "golden hour",
+            "reference_images": ["mock://references/temple-01"],
+        },
+    ).json()
+    scene = client.post(
+        "/api/v1/scenes",
+        headers=headers,
+        json={
+            "scene_number": 44,
+            "script": "Hanuman walks toward Rama in the temple courtyard.",
+            "environment_id": environment["id"],
+            "character_ids": [character["id"]],
+        },
+    ).json()
+
+    run = client.post(
+        "/api/v1/director-os/v2/run",
+        headers=headers,
+        json={
+            "scene_id": scene["id"],
+            "script": scene["script"],
+            "user_instruction": "Hanuman walks slowly through golden hour light holding the golden gada.",
+            "provider": "higgsfield",
+            "claude_review_below": 100,
+        },
+    )
+    assert run.status_code == 200
+    body = run.json()
+    assert body["blueprint_id"]
+    assert body["knowledge_packet_id"]
+    assert body["translation_id"]
+    assert body["blueprint"]["characters"][0]["name"] == "Hanuman"
+    assert body["knowledge_packet"]["film_bible"] is None
+    assert body["translated_prompt"]
+    assert body["claude_review"]
+    assert body["learning_record"]["provider"] == "higgsfield"
+
+
 def test_media_upload_accepts_images_and_rejects_other_files(client: TestClient) -> None:
     token = _register_and_login(client, role="director")
     headers = {"Authorization": f"Bearer {token}"}

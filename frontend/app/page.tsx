@@ -20,6 +20,7 @@ import {
   Character,
   DirectorWorkflow,
   DirectorWorkflowEvaluation,
+  DirectorOSV2RunResponse,
   DirectorRunResponse,
   FeedbackLoopResponse,
   EnvironmentRecord,
@@ -48,6 +49,7 @@ import {
   getProductionAnalytics,
   getProviderBehaviorSummary,
   runDirector,
+  runDirectorOSV2,
   runABTest,
   compileVisualPlan,
   ingestReference,
@@ -80,6 +82,7 @@ const emptyProp = { name: "", category: "object", description: "", position: "",
 const emptyScene = { scene_number: "1", script: "", timeline: "" };
 const emptyShot = { shot_number: "1", user_instruction: "", lighting: "", emotion: "", pose: "" };
 const emptyDirector = { script: "", user_instruction: "", max_attempts: "5" };
+const emptyDirectorOSV2 = { script: "", user_instruction: "", provider: "higgsfield", max_attempts: "5", claude_review_below: "95" };
 const emptySimpleDirector = { director_instruction: "", lighting: "", emotion: "", pose: "" };
 const emptyWorkflowUpload = { image_url: "", video_url: "" };
 const emptyBible = {
@@ -121,6 +124,8 @@ export default function Home() {
   const [workflowEvaluation, setWorkflowEvaluation] = useState<DirectorWorkflowEvaluation | null>(null);
   const [bibleForm, setBibleForm] = useState(emptyBible);
   const [directorResult, setDirectorResult] = useState<DirectorRunResponse | null>(null);
+  const [directorOSV2Form, setDirectorOSV2Form] = useState(emptyDirectorOSV2);
+  const [directorOSV2Result, setDirectorOSV2Result] = useState<DirectorOSV2RunResponse | null>(null);
   const [feedbackResult, setFeedbackResult] = useState<FeedbackLoopResponse | null>(null);
   const [brainSummary, setBrainSummary] = useState("No experiments yet.");
   const [researchSummary, setResearchSummary] = useState("No provider behavior learned yet.");
@@ -340,6 +345,70 @@ export default function Home() {
               ))}
               <SubmitButton label="Save Film Bible" />
             </form>
+          </Panel>
+
+          <Panel title="Director OS v2" icon={<Clapperboard size={18} />}>
+            <form
+              className="grid gap-3 md:grid-cols-3"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                try {
+                  const result = await runDirectorOSV2(token, {
+                    script: directorOSV2Form.script,
+                    user_instruction: directorOSV2Form.user_instruction,
+                    scene_id: selectedSceneId || null,
+                    provider: directorOSV2Form.provider,
+                    max_attempts: Number(directorOSV2Form.max_attempts),
+                    claude_review_below: Number(directorOSV2Form.claude_review_below)
+                  });
+                  setDirectorOSV2Result(result);
+                  setMessage(`Director OS v2 built a ${result.provider} prompt with ${result.confidence_score}% blueprint confidence.`);
+                  await refresh();
+                } catch (error) {
+                  setMessage(error instanceof Error ? error.message : "Director OS v2 failed");
+                }
+              }}
+            >
+              <Select label="Scene" value={selectedSceneId} onChange={setSelectedSceneId} options={scenes.map((item) => ({ value: item.id, label: `Scene ${item.scene_number}` }))} />
+              <Select
+                label="Provider"
+                value={directorOSV2Form.provider}
+                onChange={(value) => setDirectorOSV2Form((current) => ({ ...current, provider: value }))}
+                options={[
+                  { value: "higgsfield", label: "Higgsfield" },
+                  { value: "veo", label: "Veo" },
+                  { value: "kling", label: "Kling" },
+                  { value: "runway", label: "Runway" }
+                ]}
+              />
+              <Field label="Claude Below" name="claude_review_below" value={directorOSV2Form.claude_review_below} onChange={(f, v) => setDirectorOSV2Form((c) => ({ ...c, [f]: v }))} />
+              <div className="md:col-span-3">
+                <Field label="Script" name="script" value={directorOSV2Form.script} textarea onChange={(f, v) => setDirectorOSV2Form((c) => ({ ...c, [f]: v }))} />
+              </div>
+              <div className="md:col-span-3">
+                <Field label="Director Instruction" name="user_instruction" value={directorOSV2Form.user_instruction} textarea onChange={(f, v) => setDirectorOSV2Form((c) => ({ ...c, [f]: v }))} />
+              </div>
+              <Field label="Max Attempts" name="max_attempts" value={directorOSV2Form.max_attempts} onChange={(f, v) => setDirectorOSV2Form((c) => ({ ...c, [f]: v }))} />
+              <SubmitButton label="Run OS v2" />
+            </form>
+            {directorOSV2Result ? (
+              <div className="mt-4 grid gap-4">
+                <div className="grid gap-3 md:grid-cols-4">
+                  <Metric label="Blueprint Confidence" value={`${directorOSV2Result.confidence_score}%`} />
+                  <Metric label="Provider" value={directorOSV2Result.provider} />
+                  <Metric label="Evaluation" value={`${directorOSV2Result.evaluation.overall_continuity_score}%`} />
+                  <Metric label="Decision" value={directorOSV2Result.decision} />
+                </div>
+                <div className="grid gap-3 lg:grid-cols-2">
+                  <PromptBox title="Shot Blueprint" value={JSON.stringify(directorOSV2Result.blueprint, null, 2)} />
+                  <PromptBox title="Knowledge Packet" value={JSON.stringify(directorOSV2Result.knowledge_packet, null, 2)} />
+                  <PromptBox title="GPT Reasoning Prompt" value={directorOSV2Result.gpt_prompt} />
+                  <PromptBox title="Claude Review" value={JSON.stringify(directorOSV2Result.claude_review ?? { skipped: true }, null, 2)} />
+                </div>
+                <PromptBox title="Translated Provider Prompt" value={directorOSV2Result.translated_prompt} copy />
+                <PromptBox title="Learning Record" value={JSON.stringify(directorOSV2Result.learning_record, null, 2)} />
+              </div>
+            ) : null}
           </Panel>
 
           <Panel title="Director Workflow" icon={<Clapperboard size={18} />}>

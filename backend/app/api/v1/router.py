@@ -6,6 +6,7 @@ from app.api.v1 import (
     cameras,
     characters,
     director,
+    director_os,
     director_workflows,
     environments,
     evaluation,
@@ -25,6 +26,7 @@ api_router.include_router(brain.router)
 api_router.include_router(cameras.router)
 api_router.include_router(characters.router)
 api_router.include_router(director.router)
+api_router.include_router(director_os.router)
 api_router.include_router(director_workflows.router)
 api_router.include_router(environments.router)
 api_router.include_router(evaluation.router)

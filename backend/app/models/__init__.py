@@ -3,6 +3,7 @@ from app.models.camera import CameraProfile
 from app.models.embedding import CharacterEmbedding
 from app.models.critic_review import CriticReview
 from app.models.director_workflow import DirectorWorkflow
+from app.models.director_os import KnowledgePacket, ProviderTranslation, ShotBlueprint
 from app.models.environment import Environment
 from app.models.environment_embedding import EnvironmentEmbedding
 from app.models.evaluation import (
@@ -51,6 +52,9 @@ __all__ = [
     "CharacterEmbedding",
     "CriticReview",
     "DirectorWorkflow",
+    "KnowledgePacket",
+    "ProviderTranslation",
+    "ShotBlueprint",
     "Environment",
     "EnvironmentEmbedding",
     "BenchmarkProject",
