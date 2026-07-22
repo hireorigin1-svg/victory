@@ -246,7 +246,9 @@ export type ProviderDNA = {
   average_scores: Record<string, number>;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "https://victory-backend-production.up.railway.app";
 
 async function request<T>(
   path: string,
