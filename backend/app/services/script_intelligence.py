@@ -107,7 +107,7 @@ class ScriptIntelligenceService:
             warnings.append("Input appears to contain an API credit error message. Remove report/error text and upload only the screenplay.")
         if "fallback mode" in text.lower():
             warnings.append("Input appears to contain fallback report text. This analyzer only trusts screenplay content.")
-        if not SCENE_RE.search(text):
+        if not any(SCENE_RE.match(line.strip()) for line in text.splitlines()):
             warnings.append("No standard INT./EXT. scene headings found. Scene detection may be limited.")
         return warnings
 
@@ -156,7 +156,7 @@ class ScriptIntelligenceService:
         body_language: dict[str, str] = {}
         for index, line in enumerate(lines[:-1]):
             if self._is_character_cue(line, lines[index + 1]):
-                name = self._clean_character(line)
+                name = self._canonical_name(self._clean_character(line))
                 counts[name] += 1
         for scene in scenes:
             for character in scene.characters:
@@ -166,7 +166,7 @@ class ScriptIntelligenceService:
         for scene in scenes:
             for character in scene.characters:
                 first_scene.setdefault(character, scene.scene_number)
-        names = set(counts) | {name for scene in scenes for name in scene.characters}
+        names = set(counts) | {self._canonical_name(name) for scene in scenes for name in scene.characters}
         return [
             ScriptCharacterBreakdown(
                 name=name,
@@ -184,9 +184,9 @@ class ScriptIntelligenceService:
         names: list[str] = []
         for index, line in enumerate(lines[:-1]):
             if self._is_character_cue(line, lines[index + 1]):
-                names.append(self._clean_character(line))
+                names.append(self._canonical_name(self._clean_character(line)))
         for match in re.finditer(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*,\s*\d{2}\b", body):
-            names.append(match.group(1).upper())
+            names.append(self._canonical_name(match.group(1)))
         return sorted(set(names))
 
     def _is_character_cue(self, line: str, next_line: str) -> bool:
@@ -200,6 +200,12 @@ class ScriptIntelligenceService:
 
     def _clean_character(self, line: str) -> str:
         return line.replace("(V.O.)", "").replace("(O.S.)", "").strip(" .").upper()
+
+    def _canonical_name(self, name: str) -> str:
+        clean = name.upper().replace("DR. ", "").replace("DR ", "").strip()
+        if clean == "GUARDIAN OF LIGHT":
+            return "GUARDIAN"
+        return clean.split()[0] if " " in clean else clean
 
     def _character_description(self, name: str, text: str) -> str:
         pattern = re.compile(rf"([^.\n]*\\b{re.escape(name.title())}\\b[^.\n]*\\.)")
@@ -221,12 +227,7 @@ class ScriptIntelligenceService:
     def _props(self, text: str) -> list[str]:
         lowered = text.lower()
         found = [item for item in PROP_KEYWORDS if item in lowered]
-        repeated_caps = [
-            item.lower()
-            for item, count in Counter(re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b", text)).items()
-            if count >= 2 and item.lower() not in {"arjun", "meera", "ananya", "raghav", "guardian"}
-        ]
-        return sorted(set(found + repeated_caps))[:20]
+        return sorted(set(found))[:20]
 
     def _locations(self, scenes: list[ScriptSceneBreakdown]) -> list[str]:
         return sorted({scene.location for scene in scenes if scene.location})
