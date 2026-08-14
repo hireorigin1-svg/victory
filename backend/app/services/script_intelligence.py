@@ -167,6 +167,20 @@ class ScriptIntelligenceService:
             for character in scene.characters:
                 first_scene.setdefault(character, scene.scene_number)
         names = set(counts) | {self._canonical_name(name) for scene in scenes for name in scene.characters}
+        ignored_names = {
+            "THE",
+            "A",
+            "AN",
+            "ORIGINAL",
+            "FORMAT",
+            "FADE",
+            "FADE IN",
+            "FADE OUT",
+            "CUT TO",
+            "SMASH CUT TO",
+            "DISSOLVE TO",
+            "END",
+        }
         return [
             ScriptCharacterBreakdown(
                 name=name,
@@ -176,7 +190,7 @@ class ScriptIntelligenceService:
                 body_language=body_language.get(name) or self._character_body_language(name, text),
             )
             for name in sorted(names, key=lambda item: (first_scene.get(item, 999), item))
-            if name not in {"FADE IN", "FADE OUT", "CUT TO", "SMASH CUT TO", "DISSOLVE TO", "END"}
+            if name not in ignored_names
         ]
 
     def _scene_characters(self, body: str) -> list[str]:
