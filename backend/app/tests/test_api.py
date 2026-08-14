@@ -747,3 +747,87 @@ def test_phase_2_research_ops_plan_batch_learn_report_and_debate(client: TestCli
     )
     assert symbolic.status_code == 200
     assert "ACTION_" in symbolic.json()["compact_language"]
+
+
+def test_script_intelligence_analyzes_script_and_creates_storyboards(client: TestClient) -> None:
+    token = _register_and_login(client, role="director")
+    headers = {"Authorization": f"Bearer {token}"}
+    script = """
+FADE IN:
+
+EXT. TIRUMALA HILLS - PRE-DAWN
+
+ARJUN VARMA, 32, steadies a handheld camera. His left wrist carries a copper thread.
+DR. MEERA IYER studies a tablet. A waveform pulses like a devotional chant.
+
+MEERA
+The signal repeated again.
+
+ARJUN
+Maybe the hills have better memory than we do.
+
+INT. SANCTUM THRESHOLD - LATE MORNING
+
+ANANYA carries a brass lamp toward the deity. Her body language is devotional and slow.
+RAGHAV opens a palm-leaf manuscript.
+
+ANANYA
+If this is a door, who is meant to enter?
+
+EXT. VAIKUNTHAM GATE - TIMELESS
+
+The four stand before golden pillars above a sea of clouds. Satellites flicker below Earth.
+
+GUARDIAN
+You brought instruments. You brought doubt. You brought song.
+"""
+
+    analysis = client.post(
+        "/api/v1/script-intelligence/analyze",
+        headers=headers,
+        json={"title": "The Vaikuntham Signal", "script_text": script},
+    )
+    assert analysis.status_code == 200
+    body = analysis.json()
+    assert body["fallback_used"] is False
+    assert body["genre"] == "mythological sci-fi drama"
+    assert body["scene_count"] == 3
+    assert "Vaikuntham Gate" in body["locations"]
+    assert "copper thread" in body["props"]
+    assert "brass lamp" in body["props"]
+    assert {item["name"] for item in body["characters"]} >= {"ARJUN", "MEERA", "ANANYA", "GUARDIAN"}
+    assert "Srinadh" not in str(body)
+    assert "box office" not in str(body).lower()
+
+    storyboards = client.post(
+        "/api/v1/script-intelligence/storyboards",
+        headers=headers,
+        json={
+            "title": "The Vaikuntham Signal",
+            "script_text": script,
+            "style": "devotional cinematic realism",
+            "max_panels": 8,
+        },
+    )
+    assert storyboards.status_code == 200
+    storyboard_body = storyboards.json()
+    assert storyboard_body["fallback_used"] is False
+    assert storyboard_body["panel_count"] == 3
+    assert all(panel["image_prompt"] for panel in storyboard_body["panels"])
+    assert any("VAIKUNTHAM" in panel["heading"] for panel in storyboard_body["panels"])
+
+
+def test_script_intelligence_upload_rejects_report_fallback_text(client: TestClient) -> None:
+    token = _register_and_login(client, role="director")
+    headers = {"Authorization": f"Bearer {token}"}
+    report_text = b"429 You have no credits remaining. AI fallback mode. Srinadh Maganti talent profile."
+    response = client.post(
+        "/api/v1/script-intelligence/analyze-upload",
+        headers=headers,
+        data={"title": "Bad Report"},
+        files={"file": ("report.txt", report_text, "text/plain")},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert any("API credit error" in warning for warning in body["warnings"])
+    assert any("fallback report" in warning for warning in body["warnings"])

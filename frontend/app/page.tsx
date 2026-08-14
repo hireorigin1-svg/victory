@@ -23,11 +23,17 @@ import {
   DirectorOSV2RunResponse,
   DirectorRunResponse,
   FeedbackLoopResponse,
+  ScriptAnalysisResponse,
+  StoryboardResponse,
   EnvironmentRecord,
   LLMInteraction,
   SceneRecord,
   ShotRecord,
+  analyzeScript,
+  analyzeScriptUpload,
   approveShot,
+  createStoryboards,
+  createStoryboardsUpload,
   createCamera,
   createCharacter,
   createEnvironment,
@@ -96,6 +102,12 @@ const emptyBible = {
   continuity_rules: "previous approved visual memory is ground truth"
 };
 const emptyReference = { image_url: "mock://approved/reference-1", quality_score: "100" };
+const emptyScriptIntelligence = {
+  title: "The Vaikuntham Signal",
+  script_text: "",
+  style: "devotional cinematic realism",
+  max_panels: "12"
+};
 
 const fieldPresets: Record<string, string[]> = {
   face: [
@@ -396,6 +408,10 @@ export default function Home() {
   const [referenceForm, setReferenceForm] = useState(emptyReference);
   const [referenceSummary, setReferenceSummary] = useState("No reference set selected.");
   const [visualPlanSummary, setVisualPlanSummary] = useState("No visual plan compiled.");
+  const [scriptForm, setScriptForm] = useState(emptyScriptIntelligence);
+  const [scriptAnalysis, setScriptAnalysis] = useState<ScriptAnalysisResponse | null>(null);
+  const [storyboards, setStoryboards] = useState<StoryboardResponse | null>(null);
+  const [scriptUploading, setScriptUploading] = useState(false);
   const [benchmarkId, setBenchmarkId] = useState("");
   const [evaluationSummary, setEvaluationSummary] = useState("No benchmark data yet.");
   const [researchOpsSummary, setResearchOpsSummary] = useState("Research ops idle.");
@@ -609,6 +625,150 @@ export default function Home() {
               ))}
               <SubmitButton label="Save Film Bible" />
             </form>
+          </Panel>
+
+          <Panel title="Script Intelligence" icon={<FileText size={18} />}>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Field
+                label="Script Title"
+                name="title"
+                value={scriptForm.title}
+                onChange={(field, value) => setScriptForm((current) => ({ ...current, [field]: value }))}
+              />
+              <Field
+                label="Storyboard Style"
+                name="style"
+                value={scriptForm.style}
+                options={presetsFor("film_look")}
+                onChange={(field, value) => setScriptForm((current) => ({ ...current, [field]: value }))}
+              />
+              <Field
+                label="Max Panels"
+                name="max_panels"
+                value={scriptForm.max_panels}
+                onChange={(field, value) => setScriptForm((current) => ({ ...current, [field]: value }))}
+              />
+              <MediaFileField
+                label="Upload Script PDF or TXT"
+                accept="application/pdf,text/plain,.pdf,.txt"
+                disabled={scriptUploading}
+                onChange={async (file) => {
+                  if (!file) return;
+                  setScriptUploading(true);
+                  try {
+                    const [analysis, storyboardResponse] = await Promise.all([
+                      analyzeScriptUpload(token, file, scriptForm.title),
+                      createStoryboardsUpload(
+                        token,
+                        file,
+                        scriptForm.title,
+                        scriptForm.style,
+                        Number(scriptForm.max_panels)
+                      )
+                    ]);
+                    setScriptAnalysis(analysis);
+                    setStoryboards(storyboardResponse);
+                    setMessage(
+                      `Script analyzed: ${analysis.scene_count} scenes, ${analysis.character_count} characters, ${storyboardResponse.panel_count} storyboard panels.`
+                    );
+                  } catch (error) {
+                    setMessage(error instanceof Error ? error.message : "Script upload analysis failed");
+                  } finally {
+                    setScriptUploading(false);
+                  }
+                }}
+              />
+              <div className="md:col-span-2">
+                <Field
+                  label="Paste Script Text"
+                  name="script_text"
+                  value={scriptForm.script_text}
+                  textarea
+                  onChange={(field, value) => setScriptForm((current) => ({ ...current, [field]: value }))}
+                />
+              </div>
+              <button
+                className="inline-flex h-10 items-center justify-center gap-2 rounded bg-ink px-3 text-sm font-semibold text-white"
+                type="button"
+                onClick={async () => {
+                  try {
+                    const analysis = await analyzeScript(token, {
+                      title: scriptForm.title,
+                      script_text: scriptForm.script_text
+                    });
+                    setScriptAnalysis(analysis);
+                    setStoryboards(null);
+                    setMessage(`Script analyzed: ${analysis.scene_count} scenes, ${analysis.character_count} characters.`);
+                  } catch (error) {
+                    setMessage(error instanceof Error ? error.message : "Script analysis failed");
+                  }
+                }}
+              >
+                Analyze Script
+              </button>
+              <button
+                className="inline-flex h-10 items-center justify-center gap-2 rounded bg-signal px-3 text-sm font-semibold text-white"
+                type="button"
+                onClick={async () => {
+                  try {
+                    const response = await createStoryboards(token, {
+                      title: scriptForm.title,
+                      script_text: scriptForm.script_text,
+                      style: scriptForm.style,
+                      max_panels: Number(scriptForm.max_panels),
+                      create_project_records: false
+                    });
+                    setStoryboards(response);
+                    setMessage(`${response.panel_count} storyboard panel prompts created from the script.`);
+                  } catch (error) {
+                    setMessage(error instanceof Error ? error.message : "Storyboard generation failed");
+                  }
+                }}
+              >
+                Create Storyboards
+              </button>
+            </div>
+            {scriptAnalysis ? (
+              <div className="mt-4 grid gap-4">
+                <div className="grid gap-3 md:grid-cols-4">
+                  <Metric label="Genre" value={scriptAnalysis.genre} />
+                  <Metric label="Scenes" value={String(scriptAnalysis.scene_count)} />
+                  <Metric label="Characters" value={String(scriptAnalysis.character_count)} />
+                  <Metric label="Fallback" value={scriptAnalysis.fallback_used ? "Yes" : "No"} />
+                </div>
+                {scriptAnalysis.warnings.length ? (
+                  <PromptBox title="Warnings" value={scriptAnalysis.warnings.join("\n")} />
+                ) : null}
+                <PromptBox title="Logline" value={scriptAnalysis.logline} />
+                <PromptBox title="Summary" value={scriptAnalysis.summary} />
+                <div className="grid gap-3 lg:grid-cols-2">
+                  <PromptBox title="Characters" value={JSON.stringify(scriptAnalysis.characters, null, 2)} />
+                  <PromptBox title="Locations / Props / Themes" value={JSON.stringify({
+                    locations: scriptAnalysis.locations,
+                    props: scriptAnalysis.props,
+                    themes: scriptAnalysis.themes,
+                    continuity_rules: scriptAnalysis.continuity_rules
+                  }, null, 2)} />
+                </div>
+                <PromptBox title="Parsed Scenes" value={JSON.stringify(scriptAnalysis.scenes, null, 2)} />
+              </div>
+            ) : null}
+            {storyboards ? (
+              <div className="mt-4 grid gap-3">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Metric label="Storyboard Panels" value={String(storyboards.panel_count)} />
+                  <Metric label="Fallback" value={storyboards.fallback_used ? "Yes" : "No"} />
+                </div>
+                {storyboards.panels.map((panel) => (
+                  <PromptBox
+                    key={`${panel.scene_number}-${panel.panel_number}`}
+                    title={`Panel ${panel.panel_number}: ${panel.heading}`}
+                    value={JSON.stringify(panel, null, 2)}
+                    copy
+                  />
+                ))}
+              </div>
+            ) : null}
           </Panel>
 
           <Panel title="Director OS v2" icon={<Clapperboard size={18} />}>

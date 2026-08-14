@@ -16,6 +16,7 @@ from app.api.v1 import (
     props,
     research,
     scenes,
+    script_intelligence,
     shots,
     visual_intelligence,
 )
@@ -36,5 +37,6 @@ api_router.include_router(memory.router)
 api_router.include_router(props.router)
 api_router.include_router(research.router)
 api_router.include_router(scenes.router)
+api_router.include_router(script_intelligence.router)
 api_router.include_router(shots.router)
 api_router.include_router(visual_intelligence.router)

@@ -246,6 +246,65 @@ export type ProviderDNA = {
   average_scores: Record<string, number>;
 };
 
+export type ScriptSceneBreakdown = {
+  scene_number: number;
+  heading: string;
+  location: string;
+  time_of_day?: string | null;
+  summary: string;
+  characters: string[];
+  props: string[];
+  emotional_beat: string;
+  visual_style: string;
+};
+
+export type ScriptAnalysisResponse = {
+  title: string;
+  source: string;
+  fallback_used: boolean;
+  genre: string;
+  logline: string;
+  summary: string;
+  scene_count: number;
+  character_count: number;
+  characters: {
+    name: string;
+    dialogue_lines: number;
+    first_scene?: number | null;
+    description: string;
+    body_language: string;
+  }[];
+  locations: string[];
+  props: string[];
+  themes: string[];
+  continuity_rules: string[];
+  scenes: ScriptSceneBreakdown[];
+  warnings: string[];
+};
+
+export type StoryboardResponse = {
+  title: string;
+  source: string;
+  fallback_used: boolean;
+  panel_count: number;
+  panels: {
+    panel_number: number;
+    scene_number: number;
+    heading: string;
+    shot_type: string;
+    camera: string;
+    lighting: string;
+    characters: string[];
+    props: string[];
+    action: string;
+    image_prompt: string;
+    continuity_notes: string[];
+    created_scene_id?: string | null;
+    created_shot_id?: string | null;
+  }[];
+  warnings: string[];
+};
+
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "https://victory-backend-production.up.railway.app";
@@ -586,4 +645,63 @@ export function symbolicPrompt(token: string, payload: Record<string, unknown>) 
     method: "POST",
     body: JSON.stringify(payload)
   });
+}
+
+export function analyzeScript(token: string, payload: Record<string, unknown>) {
+  return request<ScriptAnalysisResponse>("/api/v1/script-intelligence/analyze", token, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function analyzeScriptUpload(token: string, file: File, title: string) {
+  const body = new FormData();
+  body.append("title", title);
+  body.append("file", file);
+  const response = await fetch(`${API_BASE}/api/v1/script-intelligence/analyze-upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.detail ?? `Script upload failed with ${response.status}`);
+  }
+  return response.json() as Promise<ScriptAnalysisResponse>;
+}
+
+export function createStoryboards(token: string, payload: Record<string, unknown>) {
+  return request<StoryboardResponse>("/api/v1/script-intelligence/storyboards", token, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function createStoryboardsUpload(
+  token: string,
+  file: File,
+  title: string,
+  style: string,
+  maxPanels: number
+) {
+  const body = new FormData();
+  body.append("title", title);
+  body.append("style", style);
+  body.append("max_panels", String(maxPanels));
+  body.append("create_project_records", "false");
+  body.append("file", file);
+  const response = await fetch(`${API_BASE}/api/v1/script-intelligence/storyboards-upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.detail ?? `Storyboard upload failed with ${response.status}`);
+  }
+  return response.json() as Promise<StoryboardResponse>;
 }
